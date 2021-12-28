@@ -4,10 +4,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include <fcntl.h> // for open
-#include <unistd.h> // for close
+#include <fcntl.h> 
+#include <unistd.h> 
 #include <pthread.h>
-
 
 int main(){
 
