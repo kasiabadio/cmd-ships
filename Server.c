@@ -102,12 +102,14 @@ void *socketThread(void *arg)
     pid_t x = syscall(__NR_gettid);
     printf("Thread id: %d\n", x);
   
-    int newSocket = *((int *)arg);
+    struct thread_arg *targs = arg;
+    int s1 = targs->s1;
+    int s2 = targs->s2;
+    
     int n;
     while(1){
 
-        // TODO: how to know to whom send message with opponent move
-        n = recv(newSocket, client_message, 256, 0);
+        n = recv(s1, client_message, 256, 0);
         if (n == 0){
             break;
         }
@@ -120,9 +122,11 @@ void *socketThread(void *arg)
         strcpy(message, client_message);
         
 
-        send(newSocket, message, strlen(message), 0);
+        send(s2, message, strlen(message), 0);
         memset(&client_message, 0, sizeof(client_message));
     }
+
+    free(targs);
 
     pthread_exit(NULL);
 }
@@ -137,7 +141,7 @@ int main(){
     ships_init(&board);
     output_board(&board, 100);
 
-    int serverSocket, newSocket;
+    int serverSocket, socketClient1, socketClient2, socketClient;
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
@@ -162,16 +166,26 @@ int main(){
 
     pthread_t thread_id;
 
-    // TODO: connect two clients to enable game
+    
     while(1)
     {
 
         // Accept call creates a new socket for the incoming connection
         addr_size = sizeof serverStorage;
-        newSocket = accept(serverSocket, (struct sockaddr *) &serverStorage, &addr_size);
+
+        unsigned int socket_counter = 0;
+        struct thread_arg targs;
+
+        while (socket_counter < 2 && ((socketClient = accept(serverSocket, (struct sockaddr *) &serverStorage, &addr_size)) != 0)){
+            printf("Accepted! SocketClient: %d\n", socketClient);
+            if (socket_counter == 0) targs.s1 = socketClient;
+            else targs.s2 = socketClient;
+            socket_counter++;
+        }
 
         // pointer to pthread object, attributes, thread function
-        if(pthread_create(&thread_id, NULL, socketThread, &newSocket) != 0)
+        // Create new socket for each game
+        if(pthread_create(&thread_id, NULL, socketThread, (void*)&targs) != 0)
         {
             printf("Failed to create thread\n");
         }else{

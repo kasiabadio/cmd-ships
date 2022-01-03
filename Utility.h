@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 #define NO_SHIP 0
 #define SHIP 1
 #define BORDER 2
@@ -163,6 +164,12 @@ struct board{
     struct ship ships[10];
     unsigned int ships_count;
     bool all_sunk;
+};
+
+
+struct thread_arg{
+    int s1;
+    int s2;
 };
 
 #endif
