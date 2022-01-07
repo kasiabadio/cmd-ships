@@ -91,38 +91,51 @@ int main(){
         perror("Could not connect");
     }
     
-    while(1){
+    int pid;
+    if ((pid = fork()) != 0){ // send message
 
-        printf("Type message: \n");
-        fgets(message, 256, stdin);
-        message[strcspn(message, "\n")] = 0;
-        if (strcmp(message, "exit\n") == 0)
-        {
-            close(clientSocket);
-            exit(EXIT_SUCCESS);
+        while(1){
+
+            printf("Type message: \n");
+            fgets(message, 256, stdin);
+            message[strcspn(message, "\n")] = 0;
+
+            if (strcmp(message, "exit\n") == 0)
+            {
+                close(clientSocket);
+                exit(EXIT_SUCCESS);
+            }
+
+            if ( send(clientSocket, message, strlen(message), 0) < 0)
+            {
+                    printf("Send failed\n");
+                    close(clientSocket);
+                    exit(EXIT_FAILURE);
+            }
+            memset(&message, 0, sizeof (message));
         }
 
-        if ( send(clientSocket, message, strlen(message), 0) < 0)
-        {
-                printf("Send failed\n");
+    }
+    else // receive message
+    {
+         while(1){
+
+            //Read the message from the server into the buffer
+            if ( recv(clientSocket, buffer, 256, 0) < 0)
+            {
+                printf("Receive failed\n");
                 close(clientSocket);
                 exit(EXIT_FAILURE);
+            }
+            //Print the received message
+            printf("Data received: %s\n", buffer);
+            memset(&buffer, 0, sizeof (buffer));
+            
         }
 
-        //Read the message from the server into the buffer
-        if ( recv(clientSocket, buffer, 256, 0) < 0 )
-        {
-            printf("Receive failed\n");
-            close(clientSocket);
-            exit(EXIT_FAILURE);
-        }
-        //Print the received message
-        printf("Data received: %s\n", buffer);
-
-        memset(&message, 0, sizeof (message));
     }
 
-    
+   
     close(clientSocket);
     return 0;
 }
