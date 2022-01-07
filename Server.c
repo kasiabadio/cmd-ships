@@ -41,6 +41,33 @@ void board_init(struct board *board, unsigned int size_board){
 }
 
 
+void validate(char *client_message, int my_s, int other_s){
+
+    bool validated = false;
+    
+    for (int i = 0; i < 100; i++){
+        if (strcmp(board_alphabet[i], client_message) == 0){
+            validated = true;
+            break;
+        }
+    }
+    
+    if (validated){ // move is valid
+        char *message = malloc(sizeof(client_message));
+        strcpy(message, client_message);
+        send(other_s, message, strlen(message), 0);
+        memset(&client_message, 0, sizeof(client_message));
+        free(message);
+
+    } else { // move is invalid, send error to sender
+        char *message = malloc(sizeof("Nieprawidłowy ruch"));
+        strcpy(message, "Nieprawidłowy ruch");
+        send(my_s, "Nieprawidłowy ruch", 19, 0);
+        free(message);
+    }
+
+}
+
 // void validate_move(){
     // TODO: check if already clicked 
     // TODO: check if there is a ship
@@ -107,48 +134,30 @@ void *socketThread(void *arg)
     int s1 = targs->s1;
     int s2 = targs->s2;
     
-    // put socket in non-blocking mode 
-    //fcntl(s1, F_SETFL, fcntl(s1, F_GETFL) | O_NONBLOCK);
-    //fcntl(s2, F_SETFL, fcntl(s2, F_GETFL) | O_NONBLOCK);
-
 
     int n1, n2;
     
     while(1){
 
-        // if ((n1 = recv(s1, client_message1, 256, MSG_DONTWAIT)) != -1) printf("Checkpoint, n1 value: %d\n", n1);
         n1 = recv(s1, client_message1, 256, MSG_DONTWAIT);
 
         if (n1 > 0) {
             printf("%s\n", client_message1);
-            // TODO: validate client move
-
-            char *message1 = malloc(sizeof(client_message1));
-                   
-            strcpy(message1, client_message1);
-            send(s2, message1, strlen(message1), 0);
-
+            validate(client_message1, s1, s2);
             memset(&client_message1, 0, sizeof(client_message1));
+
         }
         
-        //if ((n2 = recv(s2, client_message2, 256, MSG_DONTWAIT)) != -1) printf("Checkpoint, n2 value: %d\n", n2); 
         n2 = recv(s2, client_message2, 256, MSG_DONTWAIT);
 
         if (n2 > 0) {
             printf("%s\n", client_message2);
-            // TODO: validate client move
-
-            char *message2 = malloc(sizeof(client_message2));
-                   
-            strcpy(message2, client_message2);
-            send(s1, message2, strlen(message2), 0);
-
+            validate(client_message2, s2, s1);
             memset(&client_message2, 0, sizeof(client_message2));
-
         } 
 
 
-        if (n1 == 0 && n2 == 0){
+        if (n1 == 0 || n2 == 0){
             break;
         }
 
