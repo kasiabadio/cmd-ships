@@ -1,28 +1,6 @@
 #include "Utility.h"
 
 
-void output_ship(const struct ship *ship){
-
-    printf("printing ship position ... \n\n");
-    printf("name of ship: %s\n\n", ship->name);
-
-    for (unsigned i = 0; i < sizeof(ship->squares)/sizeof(ship->squares[0]); i++){
-        printf("%s ", ship->squares[i].name);
-    }
-    printf("\n\n");
-}
-
-
-void output_board(const struct board *board, unsigned int size_board){
-    
-    for (unsigned int i = 0; i < board->ships_count; i++){
-        output_ship(&board->ships[i]);
-        printf("\n");
-    }
-    printf("\n");
-}
-
-
 void board_init(struct board *board, unsigned int size_board){
 
     board->all_sunk = false;

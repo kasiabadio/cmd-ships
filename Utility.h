@@ -154,7 +154,7 @@ struct square{
 
 struct ship{
     char name[256];
-    struct square squares[10];
+    struct square squares[4];
     bool is_sunk;
 };
 
@@ -171,5 +171,40 @@ struct thread_arg{
     int s1;
     int s2;
 };
+
+
+void output_ship(const struct ship *ship){
+
+    printf("printing ship position ... \n\n");
+    printf("name of ship: %s\n\n", ship->name);
+
+    for (unsigned i = 0; i < sizeof(ship->squares)/sizeof(ship->squares[0]); i++){
+
+        printf("%s ", ship->squares[i].name);
+
+    }
+    printf("\n\n");
+}
+
+
+void output_board(const struct board *board, unsigned int size_board){
+    
+    for (unsigned int i = 0; i < board->ships_count; i++){
+
+        output_ship(&board->ships[i]);
+        printf("\n");
+
+    }
+    printf("\n");
+}
+
+
+bool in_alphabet(const char *move){
+
+    for (int i = 0; i < 100; i++){
+        if (strcmp(move, board_alphabet[i]) == 0) return true;
+    }
+    return false;
+}
 
 #endif
