@@ -12,23 +12,6 @@ void board_init(struct board *board, unsigned int size_board){
 }
 
 
-void ships_init(struct board *board){
-
-    // SHIP 1
-    strcpy(board->ships[0].squares[0].name, "A9");
-    strcpy(board->ships[0].squares[1].name, "B9");
-    strcpy(board->ships[0].name, "SHIP 1");
-    board->ships_count += 1;
-
-    // SHIP 2
-    strcpy(board->ships[1].squares[0].name, "F6");
-    strcpy(board->ships[1].squares[1].name, "G6");
-    strcpy(board->ships[1].squares[2].name, "H6");
-    strcpy(board->ships[1].name, "SHIP 2");
-    board->ships_count += 1;
-}
-
-
 int main(){
 
     
@@ -39,8 +22,7 @@ int main(){
     // client board
     struct board board;
     board_init(&board, 100);
-    ships_init(&board);
-    output_board(&board, 100);
+    //output_board(&board, 100);
 
     // opponent board
     struct board opponent_board;
