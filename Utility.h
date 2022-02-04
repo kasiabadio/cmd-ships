@@ -184,32 +184,6 @@ struct thread_arg{
 };
 
 
-void output_ship(const struct ship *ship){
-
-    printf("printing ship position ... \n\n");
-    printf("name of ship: %s\n\n", ship->name);
-
-    for (unsigned i = 0; i < sizeof(ship->squares)/sizeof(ship->squares[0]); i++){
-
-        printf("%s ", ship->squares[i].name);
-
-    }
-    printf("\n\n");
-}
-
-
-void output_board(const struct board *board){
-    
-    for (unsigned int i = 0; i < board->ships_count; i++){
-
-        output_ship(&board->ships[i]);
-        printf("\n");
-
-    }
-    printf("\n");
-}
-
-
 void output_board_squares(const struct board *board){
 
     for (int i = 0; i < 100; i++){

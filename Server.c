@@ -51,27 +51,24 @@ void validate(char *client_message, int my_s, int other_s, struct board *opponen
 
 // -------------------------------- SHIP PLACEMENT -----------------------------------------------
 
-// check if any ship overlaps
-bool is_other_ship(struct board *board, struct ship *ship){
+// iterate through board and check if overlaps ship's squares
+bool is_border_ship(struct board *board, struct ship *ship){
 
-    
-    // iterate through all ships in a board
-    for (unsigned int i = 0; i < board->ships_count; i++){
-        
-        // iterate through squares of board ship
-        for (unsigned int k = 0; k < board->ships[i].name; k++){
+    for (unsigned int s = 0; s < ship->name; s++){
 
-            // iterate through squares of ship
-            for (unsigned int s = 0; s < ship->name; s++){
-                printf("SQUARES: %s %s\n", ship->squares[s].name, board->ships[i].squares[k].name);
-                if (strcmp(ship->squares[s].name, board->ships[i].squares[k].name)){
-                    return true;
-                }
-            }
-        }  
+        //printf("s: %d\n", s);
+        for (unsigned int i = 0; i < 100; i++){
+            
+            // printf("board->board[i].name: %s, ship->squares[s].name: %s\n", 
+            //     board->board[i].name, ship->squares[s].name);
+
+            if ((strcmp(board->board[i].name, ship->squares[s].name) == 0) && board->board[i].ship != NO_SHIP) return true;
+        }
     }
+    
     return false;
 }
+
 
 // return true if ship of such size can be placed
 bool check_ship_count(int ship_size, struct board *board){
@@ -108,7 +105,7 @@ bool parse_ship_placement(char *message, struct ship *ship){
     char number_prev;
 
     ship->nhv = 'N';
-    if (strlen(message) % 2 != 0 || strlen(message) > 10) return false;
+    if (strlen(message) % 2 != 0 || strlen(message) > 8) return false;
   
     // message must contain pattern letter+number
     for (int ln = 0; ln < strlen(message); ln += 2){
@@ -174,6 +171,24 @@ bool parse_ship_placement(char *message, struct ship *ship){
 }
 
 
+void mark_ship(struct ship *ship, int ship_size, char *message){
+    char subbuff[3];
+
+    // copy client message into ship
+    ship->name = ship_size;
+    ship->is_sunk = false;
+    unsigned int s = 0;
+    for (int ln = 0; ln < strlen(message); ln += 2){
+        memcpy(subbuff, &message[ln], 2);
+        subbuff[2] = '\0';
+        strcpy(ship->squares[s].name, subbuff);
+        
+        s += 1;
+    }
+
+}
+
+
 void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size, char *message){
 
     char subbuff[3];
@@ -200,7 +215,7 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
 
     if (ship->nhv == 'N') ship->nhv = 'V';
     if (ship->nhv == 'V') { // ship is vertical
-        
+        printf("V\n");
         int start_first_row = (start_pos - 1) - 10;
         int start_last_row = (end_pos - 1) + 10;
         int modulo = start_pos % 10; // returns 0 if ship is in col 0, if it is at column 9, then 9
@@ -218,6 +233,8 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
                 board->board[r].ship = BORDER;
                 board->board[r+1].ship = SHIP;
             }
+        } else { 
+            board->board[start_pos].ship = SHIP;
         }
 
         if (modulo < 9){
@@ -236,6 +253,7 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
 
     } else if (ship->nhv == 'H'){ // ship is horizontal
 
+        printf("H\n");
         int start_first_row = (start_pos - 1) - 10;
         int end_first_row = (end_pos + 1) - 10; 
 
@@ -268,8 +286,6 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
             }
         }
     }
-   
-
 }
 
 
@@ -289,11 +305,9 @@ void *socketThread(void *arg){
     // construct boards
     struct board board1;
     board_init(&board1, 100);
-    board1.all_sunk = false;
 
     struct board board2;
     board_init(&board2, 100);
-    board2.all_sunk = false;
 
     // TODO: placement of ships by both opponents
     while (is_placement_complete(&board1) == false && is_placement_complete(&board2) == false){
@@ -303,32 +317,27 @@ void *socketThread(void *arg){
         if (n1 > 0) {
             
             ship_size = strlen(client_message1) / 2;
-            printf("ship size: %d\n", ship_size);
             struct ship ship;
             if (parse_ship_placement(&client_message1, &ship)){
-                printf("ship placement returned true\n");
 
-                if (check_ship_count(ship_size, &board1)) printf("Ship of size %d can be placed\n", ship_size);
+                if (check_ship_count(ship_size, &board1)) {
 
-                // check if there is other ship on squares in a message
-                if (!is_other_ship(&board1, &ship)){
-                    printf("There is no other ship there\n");
-                    board1.ships[board1.ships_count] = ship;
-                    // printf("Ship name: %d, is ship sunk: %d\n", 
-                    //     board1.ships[board1.ships_count].name, board1.ships[board1.ships_count].is_sunk);
-                    board1.ships_count++;
-                } else {
-                    printf("There is other ship there\n");
-                }
+                    mark_ship(&ship, ship_size, &client_message1);
 
-                mark_ship_and_border(&board1, &ship, ship_size, &client_message1);
-                output_board_squares(&board1);
+                    printf("1. Ship of size %d can be placed.\n", ship_size);
+                    if (!is_border_ship(&board1, &ship)){
 
-                // TODO: check if it is a border 
+                        printf("2. There is no other ship or border there.\n");
+                        board1.ships[board1.ships_count] = ship;
+                        board1.ships_count++;
+                        mark_ship_and_border(&board1, &ship, ship_size, &client_message1);
+                        printf("BOARD 1: \n");
+                        output_board_squares(&board1);
 
-            } else {
-                printf("ship placement returned false\n");
-            }
+                    } else { printf("2. There is other ship or border there.\n"); }
+                } else { printf("1. Ship of size %d cannot be placed.\n", ship_size); }
+            } 
+
             memset(&client_message1, 0, sizeof(client_message1));
         }
 
@@ -337,34 +346,26 @@ void *socketThread(void *arg){
         if (n2 > 0) {
             
             ship_size = strlen(client_message2) / 2;
-            printf("ship size: %d\n", ship_size);
             struct ship ship;
             if (parse_ship_placement(&client_message2, &ship)){
-                printf("ship placement returned true\n");
 
                 // check if this ship can be placed on board
-                if (check_ship_count(ship_size, &board2)) printf("Ship of size %d can be placed\n", ship_size);
+                if (check_ship_count(ship_size, &board2)) {
 
-                // check if there is other ship on squares in a message
-                if (!is_other_ship(&board2, &ship)) {
+                    mark_ship(&ship, ship_size, &client_message2);
 
-                    printf("There is no other ship there\n");
-                    board2.ships[board2.ships_count] = ship;
-                    // printf("Ship name: %d, is ship sunk: %d\n", 
-                    //     board2.ships[board2.ships_count].name, board2.ships[board2.ships_count].is_sunk);
-                    board2.ships_count++;
-                    
-                } else {
-                    printf("There is other ship there\n");
-                }
-              
-                mark_ship_and_border(&board2, &ship, ship_size, &client_message2);
-                output_board_squares(&board2);
-                // TODO: check if it is a border 
+                    printf("1. Ship of size %d can be placed\n", ship_size);
+                    if (!is_border_ship(&board2, &ship)) {
 
-            } else {
-                printf("ship placement returned false\n");
-
+                        printf("2. There is no other ship or border there\n");
+                        board2.ships[board2.ships_count] = ship;
+                        board2.ships_count++;
+                        mark_ship_and_border(&board2, &ship, ship_size, &client_message2);
+                        printf("BOARD 2: \n");
+                        output_board_squares(&board2);
+                        
+                    } else { printf("2. There is other ship or border there\n"); }
+                } else { printf("1. Ship of size %d cannot be placed.\n", ship_size); }
             }
             memset(&client_message2, 0, sizeof(client_message2));
         } 
