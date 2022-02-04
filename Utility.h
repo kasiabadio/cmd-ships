@@ -143,7 +143,6 @@ char buffer[256];
 
 const char *board_alphabet[] = {
     "A0", "B0", "C0", "D0", "E0", "F0", "G0", "H0", "I0", "J0",
-    "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2", "J2",
     "A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1", "I1", "J1",
     "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2", "J2",
     "A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3",
@@ -159,6 +158,7 @@ struct square{
     char name[256];
     unsigned int ship; // 0 - no ship, 1 - ship, 2 - border of a ship
     bool clicked; // 0 - not clicked, 1 - clicked
+    
 };
 
 
@@ -166,6 +166,7 @@ struct ship{
     int name;
     struct square squares[4];
     bool is_sunk;
+    char nhv; // 'H' - horizontal, 'V' - vertical
 };
 
 
@@ -197,7 +198,7 @@ void output_ship(const struct ship *ship){
 }
 
 
-void output_board(const struct board *board, unsigned int size_board){
+void output_board(const struct board *board){
     
     for (unsigned int i = 0; i < board->ships_count; i++){
 
@@ -206,6 +207,16 @@ void output_board(const struct board *board, unsigned int size_board){
 
     }
     printf("\n");
+}
+
+
+void output_board_squares(const struct board *board){
+
+    for (int i = 0; i < 100; i++){
+        if (i % 10 == 0) printf("\n");
+        printf("%d ", board->board[i].ship);
+    }
+    printf("\n\n");
 }
 
 
@@ -236,5 +247,13 @@ bool is_next_number(char prev_number, char curr_number){
     return true;
 }
 
+
+int find_board_position(char *square){
+
+    for (int i = 0; i < 100; i++){
+        if (strcmp(board_alphabet[i], square) == 0) return i;
+    }
+    return -1;
+}
 
 #endif
