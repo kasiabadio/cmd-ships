@@ -25,117 +25,6 @@
 #define SUBMARINE 3
 #define BATTLESHIP 4
 
-#define A0 0
-#define B0 1
-#define C0 2
-#define D0 3
-#define E0 4
-#define F0 5
-#define G0 6
-#define H0 7
-#define I0 8
-#define J0 9
-
-#define A1 10
-#define B1 11
-#define C1 12
-#define D1 13
-#define E1 14
-#define F1 15
-#define G1 16
-#define H1 17
-#define I1 18
-#define J1 19
-
-#define A2 20
-#define B2 21
-#define C2 22
-#define D2 23
-#define E2 24
-#define F2 25
-#define G2 26
-#define H2 27
-#define I2 28
-#define J2 29
-
-#define A3 30
-#define B3 31
-#define C3 32
-#define D3 33
-#define E3 34
-#define F3 35
-#define G3 36
-#define H3 37
-#define I3 38
-#define J3 39
-
-#define A4 40
-#define B4 41
-#define C4 42
-#define D4 43
-#define E4 44
-#define F4 45
-#define G4 46
-#define H4 47
-#define I4 48
-#define J4 49
-
-#define A5 50
-#define B5 51
-#define C5 52
-#define D5 53
-#define E5 54
-#define F5 55
-#define G5 56
-#define H5 57
-#define I5 58
-#define J5 59
-
-#define A6 60
-#define B6 61
-#define C6 62
-#define D6 63
-#define E6 64
-#define F6 65
-#define G6 66
-#define H6 67
-#define I6 68
-#define J6 69
-
-#define A7 70
-#define B7 71
-#define C7 72
-#define D7 73
-#define E7 74
-#define F7 75
-#define G7 76
-#define H7 77
-#define I7 78
-#define J7 79
-
-#define A8 80
-#define B8 81
-#define C8 82
-#define D8 83
-#define E8 84
-#define F8 85
-#define G8 86
-#define H8 87
-#define I8 88
-#define J8 89
-
-#define A9 90
-#define B9 91
-#define C9 92
-#define D9 93
-#define E9 94
-#define F9 95
-#define G9 96
-#define H9 97
-#define I9 98
-#define J9 99
-
-
 char client_message1[256];
 char client_message2[256];
 char buffer[256];
@@ -229,5 +118,22 @@ int find_board_position(char *square){
     }
     return -1;
 }
+
+
+void board_init(struct board *board, unsigned int size_board){
+
+    board->all_sunk = false;
+    board->ships_count = 0;
+
+    for (unsigned int i = 0; i < size_board; i++){
+
+        strcpy(board->board[i].name, board_alphabet[i]);
+        //printf("board->board[i].name: %s\n", board->board[i].name);
+        board->board[i].ship = NO_SHIP;
+        board->board[i].clicked = false;
+
+    }
+}
+
 
 #endif

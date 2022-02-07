@@ -1,293 +1,87 @@
 #include "Utility.h"
+#include "Placement.c"
 
 
-void board_init(struct board *board, unsigned int size_board){
+bool is_ship_sunk(struct board *opponent_board, char *square_name){
 
-    board->all_sunk = false;
-    board->ships_count = 0;
-
-    for (unsigned int i = 0; i < size_board; i++){
-
-        strcpy(board->board[i].name, board_alphabet[i]);
-        board->board[i].ship = NO_SHIP;
-        board->board[i].clicked = false;
-
+    for (int s = 0; s < opponent_board->ships_count; s++){
+        int clicked_counter = 0;
+        bool ship_found = false;
+        for (int i = 0; i < opponent_board->ships[s].name; i++){
+            printf("   opponent_board->ships[s].squares[i].clicked: %d\n", opponent_board->ships[s].squares[i].clicked);
+            printf("   opponent_board->ships[s].squares[i].name: %s\n", opponent_board->ships[s].squares[i].name);
+            if (opponent_board->ships[s].squares[i].clicked == true) clicked_counter++;
+            if (strcmp(opponent_board->ships[s].squares[i].name, square_name) == 0) ship_found = true;
+        }
+        printf("clicked_counter: %d, opponent_board->ships[s].name: %d\n", clicked_counter, opponent_board->ships[s].name);
+        if ((clicked_counter == opponent_board->ships[s].name) && ship_found){ 
+            opponent_board->ships[s].is_sunk = true;
+            return true;
+        }
     }
+    return false;
 }
 
-// ------------------------------------- GAME PART ----------------------------------
+
+bool check_square(struct board *opponent_board, char *square_name){
+
+    //printf("square_name: %s\n", square_name);
+
+    for (int i = 0; i < 100; i++){
+        //printf("opponent_board->board[i].name: %s\n", opponent_board->board[i].name);
+        if ((strcmp(opponent_board->board[i].name, square_name) == 0) && 
+        opponent_board->board[i].ship == SHIP) { 
+            opponent_board->board[i].clicked = true;
+
+            // save clicked in ship info ships tab 
+            for (int s = 0; s < opponent_board->ships_count; s++){
+                for (int i = 0; i < opponent_board->ships[s].name; i++){
+                    if (strcmp(opponent_board->ships[s].squares[i].name, square_name) == 0){
+                        printf("Saved square: %s\n", opponent_board->ships[s].squares[i].name);
+                        opponent_board->ships[s].squares[i].clicked = true;
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
+    return false;
+}
 
 
 void validate(char *client_message, int my_s, int other_s, struct board *opponent_board){
 
     bool validated = false;
-    
+    printf("client message: %s\n", client_message);
     for (int i = 0; i < 100; i++){
         if (strcmp(board_alphabet[i], client_message) == 0){
             validated = true;
             break;
         }
     }
-    
-    if (validated){ // move is valid, send message to opponent 
-        char *message = malloc(sizeof(client_message));
 
+    if (validated){
+      
+        bool is_ship = check_square(opponent_board, client_message);
+        if (is_ship){
 
-        strcpy(message, client_message);
-        send(other_s, message, strlen(message), 0);
-        memset(&client_message, 0, sizeof(client_message));
-        free(message);
+            send(my_s, "Ship!", 6, 0);
+            bool is_sunk = is_ship_sunk(opponent_board, client_message);
+            if (is_sunk){
+                printf("SUNK!!\n");
+                send(my_s, "SHIP SUNK!", 11, 0);
+            } 
 
-        // TODO: server checks if the ship is sunk, if true -> send message on my_s
+        } else { 
+            send(my_s, "No ship!", 9, 0);
+        }
 
     } else { // move is invalid, send error to sender
-        char *message = malloc(sizeof("Move is not valid."));
-        strcpy(message, "Move is not valid.");
         send(my_s, "Move is not valid.", 19, 0);
-        free(message);
-    }
-
-}
-
-// -------------------------------- SHIP PLACEMENT -----------------------------------------------
-
-// iterate through board and check if overlaps ship's squares
-bool is_border_ship(struct board *board, struct ship *ship){
-
-    for (unsigned int s = 0; s < ship->name; s++){
-
-        //printf("s: %d\n", s);
-        for (unsigned int i = 0; i < 100; i++){
-            
-            // printf("board->board[i].name: %s, ship->squares[s].name: %s\n", 
-            //     board->board[i].name, ship->squares[s].name);
-
-            if ((strcmp(board->board[i].name, ship->squares[s].name) == 0) && board->board[i].ship != NO_SHIP) return true;
-        }
     }
     
-    return false;
 }
-
-
-// return true if ship of such size can be placed
-bool check_ship_count(int ship_size, struct board *board){
-
-    int ship_count = 0;
-    for (int i = 0; i < board->ships_count; i++){
-        if (board->ships[i].name == ship_size) ship_count += 1;
-    }
-
-    if (ship_size == PATROL && ship_count == 4) return false;
-    else if (ship_size == DESTROYER && ship_count == 3) return false;
-    else if (ship_size == SUBMARINE && ship_count == 2) return false;
-    else if (ship_size == BATTLESHIP && ship_count == 1) return false;
-
-    return true;
-}
-
-
-// return true if any ship can be placed
-bool is_placement_complete(struct board *my_board){
-    
-    if (my_board->ships_count < 10) return false;
-    else if (check_ship_count(PATROL, &my_board) || check_ship_count(DESTROYER, &my_board) ||
-    check_ship_count(SUBMARINE, &my_board) || check_ship_count(BATTLESHIP, &my_board)) return false;
-
-    return true;
-}
-
-// parse message from client and return true if ship is correctly aligned 
-bool parse_ship_placement(char *message, struct ship *ship){
-    
-    char subbuff[3];
-    char letter_prev;
-    char number_prev;
-
-    ship->nhv = 'N';
-    if (strlen(message) % 2 != 0 || strlen(message) > 8) return false;
-  
-    // message must contain pattern letter+number
-    for (int ln = 0; ln < strlen(message); ln += 2){
-        memcpy(subbuff, &message[ln], 2);
-        subbuff[2] = '\0';
-        if (!in_alphabet(subbuff)) 
-        {
-            return false;
-            // printf("\n\nmove is not valid: %s\n\n", subbuff);
-
-        } else {
-            // printf("move is valid: %s\n", subbuff);
-            // printf("letter_prev, number_prev: %c %c\n", letter_prev, number_prev);
-            // check if ship is aligned in one line
-            if (ln >= 4){
-
-                // letter must be the same, number must be next to the previous one
-                if (ship->nhv == 'V' && letter_prev != subbuff[0]){
-                    return false;
-
-                } else if (ship->nhv == 'V' && letter_prev == subbuff[0] && !is_next_number(number_prev, subbuff[1])){
-                    return false;
-
-                } else {
-                    number_prev = subbuff[1];
-                }
-
-                // number must be the same, letter must be next to the previous one
-                if (ship->nhv == 'H' && number_prev != subbuff[1]){
-                    return false;
-
-                } else if (ship->nhv == 'H' && !is_next_letter(letter_prev, subbuff[0])){
-                    return false;
-
-                } else {
-                    letter_prev = subbuff[0];
-                }
-
-            } else if (ln == 2){
-
-                // same letters - ship is placed vertically, check only number
-                if (letter_prev == subbuff[0] && is_next_number(number_prev, subbuff[1])) { 
-                    ship->nhv = 'V';
-                    number_prev = subbuff[1];
-
-                // same numbers - ship is placed horizontally, check only letter
-                } else if (number_prev == subbuff[1] && is_next_letter(letter_prev, subbuff[0])){
-                    ship->nhv = 'H';
-                    letter_prev = subbuff[0];
-
-                } else { 
-                    return false; 
-                }
-
-            } else {
-                letter_prev = subbuff[0];
-                number_prev = subbuff[1];
-            }
-        }
-    }
-    
-    return true;    
-}
-
-
-void mark_ship(struct ship *ship, int ship_size, char *message){
-    char subbuff[3];
-
-    // copy client message into ship
-    ship->name = ship_size;
-    ship->is_sunk = false;
-    unsigned int s = 0;
-    for (int ln = 0; ln < strlen(message); ln += 2){
-        memcpy(subbuff, &message[ln], 2);
-        subbuff[2] = '\0';
-        strcpy(ship->squares[s].name, subbuff);
-        
-        s += 1;
-    }
-
-}
-
-
-void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size, char *message){
-
-    char subbuff[3];
-    char start[3], end[3];
-
-    // copy client message into ship
-    ship->name = ship_size;
-    ship->is_sunk = false;
-    unsigned int s = 0;
-    for (int ln = 0; ln < strlen(message); ln += 2){
-        memcpy(subbuff, &message[ln], 2);
-        subbuff[2] = '\0';
-        strcpy(ship->squares[s].name, subbuff);
-
-        if (ln == 0) strcpy(start, subbuff);
-        if (ln == strlen(message) - 2) strcpy(end, subbuff);
-        
-        s += 1;
-    }
-
-    // mark border on board - 2 and mark ship on board - 1
-    int start_pos = find_board_position(&start);
-    int end_pos = find_board_position(&end);
-
-    if (ship->nhv == 'N') ship->nhv = 'V';
-    if (ship->nhv == 'V') { // ship is vertical
-        printf("V\n");
-        int start_first_row = (start_pos - 1) - 10;
-        int start_last_row = (end_pos - 1) + 10;
-        int modulo = start_pos % 10; // returns 0 if ship is in col 0, if it is at column 9, then 9
-
-        for (int fr = start_first_row; fr < start_first_row + 3; fr++){
-            if ((modulo > 0 && fr == start_first_row) || 
-            (fr == start_first_row+1) || 
-            (modulo < 9 && fr == start_first_row+2)){
-                board->board[fr].ship = BORDER;
-            }
-        }
-
-        if (modulo > 0){
-            for (int r = start_pos - 1; r <= end_pos - 1; r += 10){
-                board->board[r].ship = BORDER;
-                board->board[r+1].ship = SHIP;
-            }
-        } else { 
-            board->board[start_pos].ship = SHIP;
-        }
-
-        if (modulo < 9){
-            for (int r = start_pos + 1; r <= end_pos + 1; r += 10){
-                board->board[r].ship = BORDER;
-            }
-        }
-
-        for (int lr = start_last_row; lr < start_last_row + 3; lr++){
-            if ((modulo > 0 && lr == start_last_row) || 
-            (lr == start_last_row+1) || 
-            (modulo < 9 && lr == start_last_row+2)){
-                board->board[lr].ship = BORDER;
-            }
-        }
-
-    } else if (ship->nhv == 'H'){ // ship is horizontal
-
-        printf("H\n");
-        int start_first_row = (start_pos - 1) - 10;
-        int end_first_row = (end_pos + 1) - 10; 
-
-        int start_third_row = (start_pos - 1) + 10;
-        int end_third_row = (end_pos + 1) + 10;
-
-        int modulo_start = start_pos % 10; // returns 0 if ship starts at 0
-        int modulo_end = end_pos % 10; // returns 9 if ship ends at 9
-
-
-        for (int fr = start_first_row; fr <= end_first_row; fr++){
-            if ((modulo_start > 0 && fr == start_first_row) || 
-            (fr > start_first_row && fr < end_first_row) || 
-            (modulo_end < 9 && fr == end_first_row)){
-                board->board[fr].ship = BORDER;
-            }
-        }
-
-        for (int sr = start_pos - 1; sr <= end_pos + 1; sr++){
-            if (modulo_start > 0 && sr == start_pos - 1) board->board[sr].ship = BORDER;
-            else if (sr > start_pos - 1 && sr < end_pos + 1) board->board[sr].ship = SHIP;
-            else if (modulo_end < 9 && sr == end_pos + 1) board->board[sr].ship = BORDER;
-        }
-
-        for (int tr = start_third_row; tr <= end_third_row; tr++){
-            if ((modulo_start > 0 && tr == start_third_row) || 
-            (tr > start_third_row && tr < end_third_row) || 
-            (modulo_end < 9 && tr == end_third_row)){
-                board->board[tr].ship = BORDER;
-            }
-        }
-    }
-}
-
 
 // ----------------------------------------- MAIN ----------------------------------------------
 
@@ -309,8 +103,8 @@ void *socketThread(void *arg){
     struct board board2;
     board_init(&board2, 100);
 
-    // TODO: placement of ships by both opponents
-    while (is_placement_complete(&board1) == false && is_placement_complete(&board2) == false){
+    // placement of ships by both opponents
+    while (is_placement_complete(&board1) == false || is_placement_complete(&board2) == false){
 
         // receive placement from s1
         n1 = recv(s1, client_message1, 256, MSG_DONTWAIT);
@@ -323,7 +117,6 @@ void *socketThread(void *arg){
                 if (check_ship_count(ship_size, &board1)) {
 
                     mark_ship(&ship, ship_size, &client_message1);
-
                     printf("1. Ship of size %d can be placed.\n", ship_size);
                     if (!is_border_ship(&board1, &ship)){
 
@@ -337,7 +130,6 @@ void *socketThread(void *arg){
                     } else { printf("2. There is other ship or border there.\n"); }
                 } else { printf("1. Ship of size %d cannot be placed.\n", ship_size); }
             } 
-
             memset(&client_message1, 0, sizeof(client_message1));
         }
 
@@ -349,11 +141,9 @@ void *socketThread(void *arg){
             struct ship ship;
             if (parse_ship_placement(&client_message2, &ship)){
 
-                // check if this ship can be placed on board
                 if (check_ship_count(ship_size, &board2)) {
 
                     mark_ship(&ship, ship_size, &client_message2);
-
                     printf("1. Ship of size %d can be placed\n", ship_size);
                     if (!is_border_ship(&board2, &ship)) {
 
@@ -372,6 +162,8 @@ void *socketThread(void *arg){
     }
 
 
+    // TODO: game part 
+    printf("GAME PART\n");
     while(1){
 
         n1 = recv(s1, client_message1, 256, MSG_DONTWAIT);
@@ -394,7 +186,6 @@ void *socketThread(void *arg){
         if (n1 == 0 || n2 == 0){
             break;
         }
-
     }
 
     free(targs);

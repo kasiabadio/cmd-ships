@@ -1,20 +1,8 @@
 #include "Utility.h"
 
 
-void board_init(struct board *board, unsigned int size_board){
-
-    board->all_sunk = false;
-    board->ships_count = 0;
-    for (unsigned int i = 0; i < size_board; i++){
-        strcpy(board->board[i].name, board_alphabet[i]);
-        board->board[i].clicked = false;
-    }
-}
-
-
 int main(){
 
-    
     char message[256]; //  client move --> validate by server
     char buffer[256]; //  opponent move
 
@@ -66,7 +54,7 @@ int main(){
                 exit(EXIT_SUCCESS);
             }
 
-            if ( send(clientSocket, message, strlen(message), 0) < 0)
+            if (send(clientSocket, message, strlen(message), 0) < 0)
             {
                     printf("Send failed\n");
                     close(clientSocket);
