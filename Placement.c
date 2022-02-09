@@ -190,7 +190,11 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
                 board->board[r+1].ship = SHIP;
             }
         } else { 
-            board->board[start_pos].ship = SHIP;
+
+            for (int r = start_pos; r <= end_pos; r += 10){
+                board->board[r].ship = SHIP;
+            }
+            
         }
 
         if (modulo < 9){

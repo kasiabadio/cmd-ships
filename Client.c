@@ -40,7 +40,7 @@ int main(){
     }
     
     int pid;
-    if ((pid = fork()) != 0){ // send message
+    if ((pid = fork()) == 0){ // send message
 
         while(1){
 
@@ -67,9 +67,9 @@ int main(){
     else // receive message
     {
          while(1){
-
+            int x;
             //Read the message from the server into the buffer
-            if ( recv(clientSocket, buffer, 256, 0) < 0)
+            if ( (x = recv(clientSocket, buffer, 256, 0)) < 0)
             {
                 printf("Receive failed\n");
                 close(clientSocket);
@@ -78,6 +78,11 @@ int main(){
             //Print the received message
             printf("Data received: %s\n", buffer);
             memset(&buffer, 0, sizeof (buffer));
+
+            if (x == 0){
+                kill(pid, 9);
+                exit(EXIT_SUCCESS);
+            } 
             
         }
 

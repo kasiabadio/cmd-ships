@@ -70,7 +70,9 @@ void validate(char *client_message, int my_s, int other_s, struct board *opponen
             bool is_sunk = is_ship_sunk(opponent_board, client_message);
             if (is_sunk){
                 printf("SUNK!!\n");
-                send(my_s, "SHIP SUNK!", 11, 0);
+                if (send(my_s, "SHIP SUNK!", 11, 0) == -1){
+                    printf("Send failed\n");
+                }
             } 
 
         } else { 
