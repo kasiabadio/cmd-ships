@@ -1,21 +1,17 @@
 #include "Utility.h"
-
+#include "Placement.c"
 
 int main(){
 
-    char message[256]; //  client move --> validate by server
-    char buffer[256]; //  opponent move
+    bool game = false;
+    char message[256]; 
+    char buffer[256]; 
 
-    // TODO: GUI
     // client board
-    struct board board;
-    board_init(&board, 100);
-    //output_board(&board, 100);
+    struct board my_board;
+    board_init(&my_board, 100);
 
-    // opponent board
-    struct board opponent_board;
-    board_init(&board, 100);
-    
+
     int clientSocket;
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
@@ -38,7 +34,7 @@ int main(){
         close(clientSocket);
         perror("Could not connect");
     }
-    
+
     int pid;
     if ((pid = fork()) == 0){ // send message
 
@@ -47,48 +43,76 @@ int main(){
             printf("Type message: \n");
             fgets(message, 256, stdin);
             message[strcspn(message, "\n")] = 0;
-
-            if (strcmp(message, "exit\n") == 0)
-            {
-                close(clientSocket);
-                exit(EXIT_SUCCESS);
-            }
-
             if (send(clientSocket, message, strlen(message), 0) < 0)
             {
                     printf("Send failed\n");
                     close(clientSocket);
                     exit(EXIT_FAILURE);
             }
-            memset(&message, 0, sizeof (message));
-        }
 
+            if (strcmp(message, "exit") == 0)
+            {
+                close(clientSocket);
+                exit(EXIT_SUCCESS);
+            }
+            memset(&message, 0, sizeof (message));           
+        }
     }
     else // receive message
     {
-         while(1){
+        while(1){
+
             int x;
-            //Read the message from the server into the buffer
-            if ( (x = recv(clientSocket, buffer, 256, 0)) < 0)
+            // Read the message from the server into the buffer
+            if ((x = recv(clientSocket, buffer, 256, 0)) < 0)
             {
                 printf("Receive failed\n");
                 close(clientSocket);
                 exit(EXIT_FAILURE);
-            }
-            //Print the received message
-            printf("Data received: %s\n", buffer);
-            memset(&buffer, 0, sizeof (buffer));
-
+            }  
+                
+            if ((strcmp("Game has started.", buffer)) == 0) game = true;
+            
+            // shutdown
             if (x == 0){
                 kill(pid, 9);
                 exit(EXIT_SUCCESS);
             } 
-            
+
+            if (!game){
+
+                // split buffer 
+                char letter[2], subbuff[3], start[3], end[3];
+                memcpy(letter, &buffer[0], 1);
+                letter[1] = '\0';
+
+                for (int l = 1; l < strlen(buffer); l += 2){
+                    memcpy(subbuff, &buffer[l], 2);
+                    subbuff[2] = '\0';
+                    if (l == 1) strcpy(start, subbuff);
+                    if (l == strlen(buffer) - 2) strcpy(end, subbuff);
+                }
+
+                // mark position
+                int start_pos = find_board_position(&start);
+                int end_pos = find_board_position(&end);
+
+                if (strcmp(letter, "H") == 0){
+                    mark(&my_board, 'H', start_pos, end_pos);
+                    printf("Board after placement:\n");
+                    output_board_client(&my_board);
+
+                } else if (strcmp(letter, "V") == 0){
+                    mark(&my_board, 'V', start_pos, end_pos);
+                    printf("Board after placement:\n");
+                    output_board_client(&my_board);
+                }
+            } else {
+                printf("Received message: %s\n", buffer);
+            }
+            memset(&buffer, 0, sizeof (buffer));
         }
-
     }
-
-   
     close(clientSocket);
     return 0;
 }

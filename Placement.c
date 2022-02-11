@@ -51,7 +51,6 @@ bool is_placement_complete(struct board *my_board){
 }
 
 
-
 // parse message from client and return true if ship is correctly aligned 
 bool parse_ship_placement(char *message, struct ship *ship){
     
@@ -126,7 +125,6 @@ bool parse_ship_placement(char *message, struct ship *ship){
 }
 
 
-
 void mark_ship(struct ship *ship, int ship_size, char *message){
     char subbuff[3];
 
@@ -141,37 +139,14 @@ void mark_ship(struct ship *ship, int ship_size, char *message){
         
         s += 1;
     }
-
 }
 
 
-void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size, char *message){
-
-    char subbuff[3];
-    char start[3], end[3];
-
-    // copy client message into ship
-    ship->name = ship_size;
-    ship->is_sunk = false;
-    unsigned int s = 0;
-    for (int ln = 0; ln < strlen(message); ln += 2){
-        memcpy(subbuff, &message[ln], 2);
-        subbuff[2] = '\0';
-        strcpy(ship->squares[s].name, subbuff);
-
-        if (ln == 0) strcpy(start, subbuff);
-        if (ln == strlen(message) - 2) strcpy(end, subbuff);
-        
-        s += 1;
-    }
-
-    // mark border on board - 2 and mark ship on board - 1
-    int start_pos = find_board_position(&start);
-    int end_pos = find_board_position(&end);
-
-    if (ship->nhv == 'N') ship->nhv = 'V';
-    if (ship->nhv == 'V') { // ship is vertical
-        printf("V\n");
+char mark(struct board *board, char nhv, int start_pos, int end_pos){
+    
+    //printf("Mark\n\n");
+    if (nhv == 'N') nhv = 'V';
+    if (nhv == 'V') { // ship is vertical
         int start_first_row = (start_pos - 1) - 10;
         int start_last_row = (end_pos - 1) + 10;
         int modulo = start_pos % 10; // returns 0 if ship is in col 0, if it is at column 9, then 9
@@ -189,6 +164,7 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
                 board->board[r].ship = BORDER;
                 board->board[r+1].ship = SHIP;
             }
+
         } else { 
 
             for (int r = start_pos; r <= end_pos; r += 10){
@@ -211,9 +187,8 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
             }
         }
 
-    } else if (ship->nhv == 'H'){ // ship is horizontal
+    } else if (nhv == 'H'){ // ship is horizontal
 
-        printf("H\n");
         int start_first_row = (start_pos - 1) - 10;
         int end_first_row = (end_pos + 1) - 10; 
 
@@ -246,4 +221,36 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
             }
         }
     }
+
+    return nhv;
+}
+
+
+void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size, char *message){
+
+    char subbuff[3],start[3], end[3];
+
+    // copy client message into ship
+    ship->name = ship_size;
+    ship->is_sunk = false;
+    unsigned int s = 0;
+    
+    for (int ln = 0; ln < strlen(message); ln += 2){
+        memcpy(subbuff, &message[ln], 2);
+        subbuff[2] = '\0';
+        strcpy(ship->squares[s].name, subbuff);
+
+        if (ln == 0) strcpy(start, subbuff);
+        if (ln == strlen(message) - 2) strcpy(end, subbuff);
+        
+        s += 1;
+    }
+
+    // mark border on board - 2 and mark ship on board - 1
+    int start_pos = find_board_position(&start);
+    int end_pos = find_board_position(&end);
+
+    char new_nhv = mark(board, ship->nhv, start_pos, end_pos);
+    ship->nhv = new_nhv;
+
 }
