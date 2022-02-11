@@ -94,8 +94,8 @@ int main(){
                 }
 
                 // mark position
-                int start_pos = find_board_position(&start);
-                int end_pos = find_board_position(&end);
+                int start_pos = find_board_position(start);
+                int end_pos = find_board_position(end);
 
                 if (strcmp(letter, "H") == 0){
                     mark(&my_board, 'H', start_pos, end_pos);

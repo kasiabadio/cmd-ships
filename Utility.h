@@ -1,7 +1,6 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -15,12 +14,6 @@
 #include <pthread.h>
 #include <sys/syscall.h>
 #include <stdbool.h>
-
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-
 
 #define NO_SHIP 0
 #define SHIP 1
@@ -79,7 +72,6 @@ struct thread_arg{
     int s1;
     int s2;
 };
-
 
 void output_board_squares(const struct board *board){
 

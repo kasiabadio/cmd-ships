@@ -9,7 +9,7 @@ int main(){
     pid_t x = syscall(__NR_gettid);
     printf("Main id: %d\n", x);
 
-    int serverSocket, socketClient1, socketClient2, socketClient;
+    int serverSocket, socketClient;
     struct sockaddr_in serverAddr;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;

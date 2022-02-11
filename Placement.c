@@ -44,8 +44,8 @@ bool is_placement_complete(struct board *my_board){
     if (my_board->ships_count < 10) return false;
 
     // double check
-    if (check_ship_count(PATROL, &my_board) || check_ship_count(DESTROYER, &my_board) ||
-    check_ship_count(SUBMARINE, &my_board) || check_ship_count(BATTLESHIP, &my_board)) return false;
+    if (check_ship_count(PATROL, my_board) || check_ship_count(DESTROYER, my_board) ||
+    check_ship_count(SUBMARINE, my_board) || check_ship_count(BATTLESHIP, my_board)) return false;
 
     return true;
 }
@@ -247,8 +247,8 @@ void mark_ship_and_border(struct board *board, struct ship *ship, int ship_size,
     }
 
     // mark border on board - 2 and mark ship on board - 1
-    int start_pos = find_board_position(&start);
-    int end_pos = find_board_position(&end);
+    int start_pos = find_board_position(start);
+    int end_pos = find_board_position(end);
 
     char new_nhv = mark(board, ship->nhv, start_pos, end_pos);
     ship->nhv = new_nhv;
