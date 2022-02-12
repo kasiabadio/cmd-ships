@@ -81,7 +81,7 @@ bool validate(char *client_message, int my_s, int other_s, struct board *opponen
             sleep(1);
             if ((send(other_s, "Opponent hit!", 14, 0)) == -1) printf("Send failed\n");
 
-            bool is_sunk = is_ship_sunk(opponent_board, &client_message_copy);
+            bool is_sunk = is_ship_sunk(opponent_board, client_message_copy);
             if (is_sunk){
                 printf("Ship sunk!\n");
 

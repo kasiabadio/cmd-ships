@@ -28,11 +28,11 @@ void *socketThread(void *arg){
             
             ship_size = strlen(client_message1) / 2;
             struct ship ship;
-            if (parse_ship_placement(&client_message1, &ship)){
+            if (parse_ship_placement(client_message1, &ship)){
 
                 if (check_ship_count(ship_size, &board1)) {
 
-                    mark_ship(&ship, ship_size, &client_message1);
+                    mark_ship(&ship, ship_size, client_message1);
                     //printf("Ship of size %d can be placed.\n", ship_size);
 
                     if (!is_border_ship(&board1, &ship)){
@@ -40,7 +40,7 @@ void *socketThread(void *arg){
                         printf("There is no other ship or border there.\n");
                         board1.ships[board1.ships_count] = ship;
                         board1.ships_count++;
-                        mark_ship_and_border(&board1, &ship, ship_size, &client_message1);
+                        mark_ship_and_border(&board1, &ship, ship_size, client_message1);
                         
                         char temp1[2];
 
@@ -74,11 +74,11 @@ void *socketThread(void *arg){
             
             ship_size = strlen(client_message2) / 2;
             struct ship ship;
-            if (parse_ship_placement(&client_message2, &ship)){
+            if (parse_ship_placement(client_message2, &ship)){
 
                 if (check_ship_count(ship_size, &board2)) {
 
-                    mark_ship(&ship, ship_size, &client_message2);
+                    mark_ship(&ship, ship_size, client_message2);
                     //printf("Ship of size %d can be placed\n", ship_size);
 
                     if (!is_border_ship(&board2, &ship)) {
@@ -86,7 +86,7 @@ void *socketThread(void *arg){
                         //printf("There is no other ship or border there\n");
                         board2.ships[board2.ships_count] = ship;
                         board2.ships_count++;
-                        mark_ship_and_border(&board2, &ship, ship_size, &client_message2);
+                        mark_ship_and_border(&board2, &ship, ship_size, client_message2);
 
                         char temp2[2];
 
