@@ -38,7 +38,7 @@ int main(){
         close(clientSocket);
         perror("Could not connect");
     }
-
+    printf("Place your ships: 1 (XXXX), 2(XXX), 3(XX), 4(X)\n");
     int pid;
     if ((pid = fork()) == 0){ // send message
 
@@ -85,7 +85,7 @@ int main(){
 
             if (!game){
                 
-                printf("Received message: %s\n", buffer);
+                //printf("Received message: %s\n", buffer);
 
                 // split buffer 
                 char letter[2], subbuff[3], start[3], end[3];
@@ -137,20 +137,7 @@ int main(){
 
                     }
                     output_board_opponent(&opponent_board);
-
                 }
-
-// // mark move on board
-// void mark_opponent_clicked(struct board *board, int pos){
-//     board->board[pos].clicked = true;
-    
-// }
-
-// // mark ship on opponent board
-// void mark_opponent_ship(struct board *board, int pos){
-//     board->board[[pos]].clicked = true;
-    
-// }
             }
             memset(&buffer, 0, sizeof (buffer));
         }

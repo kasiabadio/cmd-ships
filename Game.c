@@ -57,7 +57,7 @@ bool check_square(struct board *opponent_board, char *square_name){
 }
 
 
-void validate(char *client_message, int my_s, int other_s, struct board *opponent_board){
+bool validate(char *client_message, int my_s, int other_s, struct board *opponent_board){
     
     bool validated = false;
     for (int i = 0; i < 100; i++){
@@ -92,6 +92,7 @@ void validate(char *client_message, int my_s, int other_s, struct board *opponen
             } 
 
         } else { 
+            
             strcat(client_message, "->None");
             printf("None\n");
 
@@ -102,7 +103,8 @@ void validate(char *client_message, int my_s, int other_s, struct board *opponen
         }
 
     } else { // move is invalid, send error to sender
-        if ((send(my_s, "Move is not valid.", 19, 0)) == -1) printf("Send failed\n");
-    }
-    
+        if ((send(my_s, "Type again.", 12, 0)) == -1) printf("Send failed\n");
+        return false;
+    } 
+    return true;
 }

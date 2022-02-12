@@ -131,52 +131,55 @@ void *socketThread(void *arg){
             sleep(1);
             if ((send(s1, "Type move", 10, 0)) == -1) printf("Send failed 7\n");
             
+            bool v;
             n1 = recv(s1, client_message1, 256, 0);
             if (n1 > 0) {
                 printf("Received move: %s\n", client_message1);
-                validate(client_message1, s1, s2, &board2);
+                v = validate(client_message1, s1, s2, &board2);
+                if (v){
+                    round1 = false;
+                    round2 = true; // then receive message only from s2 only if move was correct
+                } 
                 memset(&client_message1, 0, sizeof(client_message1));
-            }
-            round1 = false;
-            round2 = true; // then receive message only from s2
+            }   
         }
 
         if (round2) { // receive message only from s2
             sleep(1);
-            if ((send(s2, "Type move", 10, 0)) == -1) printf("Send failed 8\n");
-            
+            if ((send(s2, "Type move.", 11, 0)) == -1) printf("Send failed 8\n");
 
+            bool v;
             n2 = recv(s2, client_message2, 256, 0);
             if (n2 > 0) {
                 printf("Received move: %s\n", client_message2);
-                validate(client_message2, s2, s1, &board1);
+                v = validate(client_message2, s2, s1, &board1);
+                if (v){
+                    round1 = true; // then receive message only from s1 only if move was correct
+                    round2 = false;
+                } 
                 memset(&client_message2, 0, sizeof(client_message2));
             } 
-            sleep(1);
-
-            // check if all ships are sunk
-            if (are_all_sunk(&board1)){
-                sleep(1);
-                if (send(s1, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
-                sleep(1);
-                if (send(s2, "You won.", 9, 0) == -1) printf("Send failed 10\n");
-                sleep(2);
-                break;
-            }
-
-            if (are_all_sunk(&board2)){
-                sleep(1);
-                if (send(s2, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
-                sleep(1);
-                if (send(s1, "You won.", 9, 0) == -1) printf("Send failed 10\n");
-                sleep(2);
-                break;
-            }
-
-            round1 = true; // then receive message only from s1
-            round2 = false;
         }
-       
+
+        // check if all ships are sunk
+        if (are_all_sunk(&board1)){
+            sleep(1);
+            if (send(s1, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
+            sleep(1);
+            if (send(s2, "You won.", 9, 0) == -1) printf("Send failed 10\n");
+            sleep(2);
+            break;
+        }
+
+        if (are_all_sunk(&board2)){
+            sleep(1);
+            if (send(s2, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
+            sleep(1);
+            if (send(s1, "You won.", 9, 0) == -1) printf("Send failed 10\n");
+            sleep(2);
+            break;
+        }
+
         if (n1 == 0 || n2 == 0){
             break;
         }
