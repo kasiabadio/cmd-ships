@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <sys/syscall.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #define NO_SHIP 0
 #define SHIP 1
@@ -106,6 +107,30 @@ void output_board_client(const struct board *board){
     printf("\n\n");
 }
 
+
+void output_board_opponent(const struct board *board){
+    printf("   A B C D E F G H I J\n");
+    for (int i = 0; i < 100; i++){
+        if (i % 10 == 0) printf("\n");
+
+        if (i == 0) printf("0  ");
+        else if (i == 10) printf("1  ");
+        else if (i == 20) printf("2  ");
+        else if (i == 30) printf("3  ");
+        else if (i == 40) printf("4  ");
+        else if (i == 50) printf("5  ");
+        else if (i == 60) printf("6  ");
+        else if (i == 70) printf("7  ");
+        else if (i == 80) printf("8  ");
+        else if (i == 90) printf("9  ");
+
+        if (board->board[i].ship == NO_SHIP && board->board[i].clicked == true) printf(". ");
+        if (board->board[i].ship == NO_SHIP && board->board[i].clicked == false) printf("- ");
+        if (board->board[i].ship == SHIP && board->board[i].clicked == true) printf("X ");
+
+    }
+    printf("\n\n");
+}
 
 bool in_alphabet(const char *move){
 

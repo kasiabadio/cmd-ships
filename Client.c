@@ -12,6 +12,10 @@ int main(){
     board_init(&my_board, 100);
 
 
+    // opponent board
+    struct board opponent_board;
+    board_init(&opponent_board, 100);
+
     int clientSocket;
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
@@ -40,7 +44,7 @@ int main(){
 
         while(1){
 
-            printf("Type message: \n");
+            //printf("Type message: \n");
             fgets(message, 256, stdin);
             message[strcspn(message, "\n")] = 0;
             if (send(clientSocket, message, strlen(message), 0) < 0)
@@ -80,6 +84,8 @@ int main(){
             } 
 
             if (!game){
+                
+                printf("Received message: %s\n", buffer);
 
                 // split buffer 
                 char letter[2], subbuff[3], start[3], end[3];
@@ -109,6 +115,42 @@ int main(){
                 }
             } else {
                 printf("Received message: %s\n", buffer);
+
+                // split buffer 
+                char letter[3], subbuff[256];
+                memcpy(letter, &buffer[0], 2);
+                letter[2] = '\0';
+
+                if (in_alphabet(letter)){
+
+                    memcpy(subbuff, &buffer[2], 254);
+                    subbuff[254] = '\0';
+
+                    int pos = find_board_position(letter);
+                    opponent_board.board[pos].clicked = true;
+
+                    if (strcmp(subbuff, "->Ship") == 0){
+                        opponent_board.board[pos].ship = SHIP;
+
+                    } else if (strcmp(subbuff, "->None") == 0){
+                        opponent_board.board[pos].ship = NO_SHIP;
+
+                    }
+                    output_board_opponent(&opponent_board);
+
+                }
+
+// // mark move on board
+// void mark_opponent_clicked(struct board *board, int pos){
+//     board->board[pos].clicked = true;
+    
+// }
+
+// // mark ship on opponent board
+// void mark_opponent_ship(struct board *board, int pos){
+//     board->board[[pos]].clicked = true;
+    
+// }
             }
             memset(&buffer, 0, sizeof (buffer));
         }

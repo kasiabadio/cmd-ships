@@ -28,11 +28,11 @@ void *socketThread(void *arg){
             
             ship_size = strlen(client_message1) / 2;
             struct ship ship;
-            if (parse_ship_placement(client_message1, &ship)){
+            if (parse_ship_placement(&client_message1, &ship)){
 
                 if (check_ship_count(ship_size, &board1)) {
 
-                    mark_ship(&ship, ship_size, client_message1);
+                    mark_ship(&ship, ship_size, &client_message1);
                     //printf("Ship of size %d can be placed.\n", ship_size);
 
                     if (!is_border_ship(&board1, &ship)){
@@ -40,7 +40,7 @@ void *socketThread(void *arg){
                         printf("There is no other ship or border there.\n");
                         board1.ships[board1.ships_count] = ship;
                         board1.ships_count++;
-                        mark_ship_and_border(&board1, &ship, ship_size, client_message1);
+                        mark_ship_and_border(&board1, &ship, ship_size, &client_message1);
                         
                         char temp1[2];
 
@@ -74,11 +74,11 @@ void *socketThread(void *arg){
             
             ship_size = strlen(client_message2) / 2;
             struct ship ship;
-            if (parse_ship_placement(client_message2, &ship)){
+            if (parse_ship_placement(&client_message2, &ship)){
 
                 if (check_ship_count(ship_size, &board2)) {
 
-                    mark_ship(&ship, ship_size, client_message2);
+                    mark_ship(&ship, ship_size, &client_message2);
                     //printf("Ship of size %d can be placed\n", ship_size);
 
                     if (!is_border_ship(&board2, &ship)) {
@@ -86,7 +86,7 @@ void *socketThread(void *arg){
                         //printf("There is no other ship or border there\n");
                         board2.ships[board2.ships_count] = ship;
                         board2.ships_count++;
-                        mark_ship_and_border(&board2, &ship, ship_size, client_message2);
+                        mark_ship_and_border(&board2, &ship, ship_size, &client_message2);
 
                         char temp2[2];
 
@@ -116,16 +116,21 @@ void *socketThread(void *arg){
         } 
     }
 
+    sleep(4);
     printf("Game part\n");
-    if ((send(s1, "Game has started.", 18, 0)) == -1) printf("Send failed 5\n");
-    if ((send(s2, "Game has started.", 18, 0)) == -1) printf("Send failed 6\n");
+    if ((send(s2, "Game has started.", 18, 0)) == -1){
+        printf("Send failed 5\n");
+    }
+    if ((send(s1, "Game has started.", 18, 0)) == -1){
+        printf("Send failed 6\n");
+    } 
 
     while(1){
 
         if (round1) { // receive message only from s1
-
+            sleep(1);
             if ((send(s1, "Type move", 10, 0)) == -1) printf("Send failed 7\n");
-
+            
             n1 = recv(s1, client_message1, 256, 0);
             if (n1 > 0) {
                 printf("Received move: %s\n", client_message1);
@@ -137,8 +142,9 @@ void *socketThread(void *arg){
         }
 
         if (round2) { // receive message only from s2
-
+            sleep(1);
             if ((send(s2, "Type move", 10, 0)) == -1) printf("Send failed 8\n");
+            
 
             n2 = recv(s2, client_message2, 256, 0);
             if (n2 > 0) {
@@ -146,6 +152,27 @@ void *socketThread(void *arg){
                 validate(client_message2, s2, s1, &board1);
                 memset(&client_message2, 0, sizeof(client_message2));
             } 
+            sleep(1);
+
+            // check if all ships are sunk
+            if (are_all_sunk(&board1)){
+                sleep(1);
+                if (send(s1, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
+                sleep(1);
+                if (send(s2, "You won.", 9, 0) == -1) printf("Send failed 10\n");
+                sleep(2);
+                break;
+            }
+
+            if (are_all_sunk(&board2)){
+                sleep(1);
+                if (send(s2, "Game over.", 10, 0) == -1) printf("Send failed 9\n");
+                sleep(1);
+                if (send(s1, "You won.", 9, 0) == -1) printf("Send failed 10\n");
+                sleep(2);
+                break;
+            }
+
             round1 = true; // then receive message only from s1
             round2 = false;
         }
