@@ -14,3 +14,5 @@ Każdy klient ma jednocześnie działające dwa procesy, macierzysty oraz potomn
 ### 3.	Podsumowanie.
 
 Plansza gry jest reprezentowana w postaci struktury „board”, gdzie istnieje tablica jednowymiarowa typu „square” o długości stu elementów. Struktura „square” posiada informację o nazwie pola, czy jest na nim statek (0 = NO_SHIP, 1 = SHIP, 2 = BORDER) oraz, czy pole było już kliknięte. Ponadto w strukturze „board” przechowuje się tablicę jednowymiarową statków, o typie „ship”. Każdy ze statków posiada swoją nazwę (1 = PATROL, 2 = DESTROYER, 3 = SUBMARINE, 4 = BATTLESHIP), pozycję w przestrzeni, czy jest zatopiony, oraz numery pól odpowiadające kwadratom w tablicy board_alphabet <0 – 99>. Powyższe struktury pozwalają na oznaczanie pozycji statku w czasie rozgrywki, a także jego „otoczki”, gdzie nie pozwala się na położenie innego statku. Problematyczne było zaprogramowanie oznaczania statków, na tablicy jednowymiarowej, ponieważ statki mogą być ustawione poziomo lub pionowo, a także, przy granicy planszy. Dlatego należało uwzględnić wiele wariantów ułożenia (funkcja „mark”). 
+
+© Katarzyna Badio 2022
